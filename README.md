@@ -4,7 +4,7 @@ This repository contains the official PyTorch implementation for the paper: **SA
 
 Our paper has been submitted to The 2026 ACM Web Conference. We will update the paper link and BibTeX citation upon acceptance.
 
-**[Paper]** (Link to be updated) | **[Code]** (https://github.com/tsinghua-fib-lab/SAM)
+**[Paper]**  | **[Code](https://github.com/tsinghua-fib-lab/SAM)** 
 
 ## Introduction
 
@@ -13,7 +13,7 @@ Sequential recommendation is crucial for capturing users' dynamic preferences. H
 To address these challenges, we propose **SAM**, a novel two-stage framework that leverages Large Language Models (LLMs) for semantic-augmented multi-interest learning. SAM excels at semantic understanding, applying them directly to multi-interest learning by generating a semantically-rich interest representation and employing a sophisticated fusion method to preserve the structural integrity of the ID embedding space.
 
 <p align="center">
-  <img src="https://i.imgur.com/examp.png" width="800">
+  <img src="assets/figures/sam_overview.png" width="800" alt="SAM overview">
   <br>
   <em>Figure 1: The overall framework of SAM.</em>
 </p>
@@ -50,21 +50,26 @@ We use five sub-datasets from the **Amazon Review Data (2018)** and a large-scal
 
 ### Amazon Datasets
 
-1.  **Download**: Download the 5-core review data (`reviews_*_5.json`) and metadata (`meta_*.json`) for the following datasets:
-    *   [All Beauty](https://nijianmo.github.io/amazon/index.html)
-    *   [Arts, Crafts & Sewing](https://nijianmo.github.io/amazon/index.html)
-    *   [Industrial & Scientific](https://nijianmo.github.io/amazon/index.html)
-    *   [Musical Instruments](https://nijianmo.github.io/amazon/index.html)
-    *   [Office Products](https://nijianmo.github.io/amazon/index.html)
+1. **Download** the 5-core review data and metadata from [Amazon Review Data (2018)](https://cseweb.ucsd.edu/~jmcauley/datasets/amazon_v2/):
+   - All Beauty
+   - Arts Crafts & Sewing
+   - Industrial & Scientific
+   - Musical Instruments
+   - Office Products
 
 2.  **Preprocess**: Place the downloaded files in the `Data/` directory and run the preprocessing script. This script will filter users/items with less than 5 interactions and generate a unified data format.
 
-    For example, to process the 'All Beauty' dataset:
+    For example, to process the 'Musical_Instruments' dataset:
     ```bash
-    # Make sure reviews_Beauty_5.json and meta_Beauty.json are in Data/
-    python Data/DataProcessing.py --dataset Musical_Instruments
+    # Make sure reviews_Musical_Instruments_5.json and meta_Musical_Instruments.json are in Data/
+    cd Data
+    python DataProcessing.py --dataset Musical_Instruments
     ```
     This will generate `Data/Musical_Instruments.txt` which will be used in the training process.
+
+#### Alibaba Dataset
+
+The Alibaba dataset is proprietary and used with permission. For academic research purposes, please contact the authors.
 
 ## How to Run
 
@@ -72,55 +77,36 @@ The training process of SAM consists of two stages:
 
 ### Stage 1: Multi-Interest Extraction
 
-In this stage, we use the Interest Group Identification Module to determine the optimal number of interests (K) for each user and then leverage a pre-trained BERT model to generate semantic interest representations.
+In this stage, we use the Interest Group Identification Module to determine the optimal number of interests (K) for each user and then leverage **Qwen-Turbo** to generate semantic interest representations.
 
-Important: We now use a local BERT model only. Please place `bert-base-uncased` under `MyModel/LLMs/bert-base-uncased` (it should contain `config.json`, `pytorch_model.bin`, `vocab.txt`, etc.). The script loads it with `local_files_only=True` and will not download from the internet.
+**Requirements**:
+- Local BERT model: Download `[bert-base-uncased](https://huggingface.co/google-bert/bert-base-uncased)` and place it under `LLMs/`
+- DashScope API key for [Qwen-Turbo](https://dashscope.aliyun.com/) access
 
-LLM (Qwen-Turbo) API requirements:
-- We call DashScope Qwen-Turbo to generate interest texts. You must provide a valid API key.
-- Preferred: export an environment variable and pass it to the script.
-
-Setup and run (example for Beauty):
+Setup and run (example for Musical Instruments):
 ```bash
 # 1) Prepare API key (replace with your own key)
 export DASHSCOPE_API_KEY='sk-xxxxxxxxxxxxxxxx'
 
-# 2) Generate interests with local BERT and Qwen-Turbo
+# 2) Generate interests for All Beaury dataset
 python stage1_generate_interests.py \
-  --dataset Beauty \
+  --dataset Musical_Instruments \
   --api_key "$DASHSCOPE_API_KEY" \
-  --debug  # optional: prints prompts and HTTP snippets for troubleshooting
 ```
-This will produce:
-- `Interests/interests_Beauty.pt` (semantic interest vectors, dict: {user_id -> Tensor[k, 768]})
-- `Interests/interests_Beauty.csv` (generated interest texts per user)
-
-Troubleshooting:
-- HTTP 401 InvalidApiKey: the key is invalid/expired or contains whitespace. Re-check and retry.
-- Empty interests (K=0 printed): usually due to LLM call failure; use `--debug` to see HTTP messages.
 
 ### Stage 2: Interest-Guided Representation Enhancement
 
 This is the main training stage. The model learns to fuse the semantic interests from Stage 1 with the user's behavior sequence.
 
-Run (example for Beauty):
+Run (example for Musical Instruments):
 ```bash
 python main.py \
-  --dataset Beauty \
+  --dataset Musical_Instruments \
   --epochs 400 \
   --batch_size 1024 \
-  --learning_rate 0.0005 \
-  --item_dim 256 \
-  --max_seq_len 20
+  --learning_rate 0.001 \
+  --item_dim 128 \
 ```
-The script will automatically read:
-- `Data/Beauty.txt`
-- `Interests/interests_Beauty.pt`
-
-Key Notes:
-- `--item_dim`: ID embedding dimension (default 256)
-- The BERT output dimension used in Stage1 is 768 (bert-base-uncased)
-- Evaluation: sampled ranking (1 positive + 100 negatives), reporting HR@20/NDCG@20/MRR@20
 
 ## Performance
 
@@ -141,6 +127,28 @@ SAM achieves state-of-the-art performance across all six datasets. The table bel
 | **Alibaba**              | MRR@20   | 0.5327 | 0.4695 | 0.4031 | 0.4720 | **0.5709**     | **+7.17%**      |
 |                        | NDCG@20 | 0.5982 | 0.5209 | 0.4416 | 0.5251 | **0.6024**     | **+0.70%**      |
 
+## Project Structure
+
+```
+SAM/
+├── Data/
+│   ├── DataProcessing.py          # Preprocessing script for Amazon datasets
+│   └── {dataset}.txt              # Processed dataset files (user_id, item_id, title)
+├── Interests/
+│   ├── interests_{dataset}.pt     # Semantic interest embeddings from Stage 1
+│   └── interests_{dataset}.csv    # Generated interest descriptions
+├── LLMs/
+│   └── bert-base-uncased/         # Local BERT model (download separately)         
+├── main.py                        # Stage 2 training script
+├── model.py                       # Stage 2 Model architecture
+├── stage1_generate_interests.py   # Stage 1 interest extraction
+├── stage2_attention.py            # Dual-attention mechanisms
+├── trainer.py                     # Training and evaluation logic
+├── utils.py                       # Utility functions
+├── requirements.txt               # Python dependencies
+└── README.md                      # This file
+```
+
 ## Citation
 
 If you find our work useful for your research, please consider citing our paper. The BibTeX entry will be provided upon publication.
@@ -156,5 +164,11 @@ If you find our work useful for your research, please consider citing our paper.
 
 ## Acknowledgements
 
-Our implementation for the dynamic routing mechanism is inspired by the official code of [MIND](https://github.com/alibaba/MIND).
+- Our implementation for the dynamic routing mechanism is inspired by the official code of [MIND](https://github.com/Wang-Yu-Qing/MIND)
 
+##  Contact
+
+For questions or collaborations, please contact:
+
+- **Fei Yang**: fei.yang@mail.bnu.edu.cn
+- **Bin Liu**: zhuoli.lb@alibaba-inc.com
