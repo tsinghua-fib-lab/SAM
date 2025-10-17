@@ -13,7 +13,7 @@ Sequential recommendation is crucial for capturing users' dynamic preferences. H
 To address these challenges, we propose **SAM**, a novel two-stage framework that leverages Large Language Models (LLMs) for semantic-augmented multi-interest learning. SAM excels at semantic understanding, applying them directly to multi-interest learning by generating a semantically-rich interest representation and employing a sophisticated fusion method to preserve the structural integrity of the ID embedding space.
 
 <p align="center">
-  <img src="assets/figures/sam_overview.png" width="800" alt="SAM overview">
+  <img src="sam_overview.png" width="800" alt="SAM overview">
   <br>
   <em>Figure 1: The overall framework of SAM.</em>
 </p>
