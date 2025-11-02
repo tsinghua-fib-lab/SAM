@@ -12,12 +12,6 @@ Sequential recommendation is crucial for capturing users' dynamic preferences. H
 
 To address these challenges, we propose **SAM**, a novel two-stage framework that leverages Large Language Models (LLMs) for semantic-augmented multi-interest learning. SAM excels at semantic understanding, applying them directly to multi-interest learning by generating a semantically-rich interest representation and employing a sophisticated fusion method to preserve the structural integrity of the ID embedding space.
 
-<p align="center">
-  <img src="assets/figures/sam_overview.png" width="800" alt="SAM overview">
-  <br>
-  <em>Figure 1: The overall framework of SAM.</em>
-</p>
-
 ### Key Contributions:
 
 *   **Adaptive Interest Extraction**: We introduce an Interest Group Identification Module that adaptively determines the optimal number of interests for each user, using this as a data-driven constraint to guide LLM-based semantic interest generation.
@@ -46,9 +40,7 @@ To address these challenges, we propose **SAM**, a novel two-stage framework tha
 
 ## Dataset Preparation
 
-We use five sub-datasets from the **Amazon Review Data (2018)** and a large-scale **Alibaba** dataset.
-
-### Amazon Datasets
+We use five sub-datasets from the **Amazon Review Data (2018)** dataset.
 
 1. **Download** the 5-core review data and metadata from [Amazon Review Data (2018)](https://cseweb.ucsd.edu/~jmcauley/datasets/amazon_v2/):
    - All Beauty
@@ -67,9 +59,6 @@ We use five sub-datasets from the **Amazon Review Data (2018)** and a large-scal
     ```
     This will generate `Data/Musical_Instruments.txt` which will be used in the training process.
 
-#### Alibaba Dataset
-
-The Alibaba dataset is proprietary and used with permission. For academic research purposes, please contact the authors.
 
 ## How to Run
 
@@ -80,7 +69,7 @@ The training process of SAM consists of two stages:
 In this stage, we use the Interest Group Identification Module to determine the optimal number of interests (K) for each user and then leverage **Qwen-Turbo** to generate semantic interest representations.
 
 **Requirements**:
-- Local BERT model: Download `[bert-base-uncased](https://huggingface.co/google-bert/bert-base-uncased)` and place it under `LLMs/`
+- Local BERT model: Download [bert-base-uncased](https://huggingface.co/google-bert/bert-base-uncased) and place it under `LLMs/`
 - DashScope API key for [Qwen-Turbo](https://dashscope.aliyun.com/) access
 
 Setup and run (example for Musical Instruments):
@@ -88,7 +77,7 @@ Setup and run (example for Musical Instruments):
 # 1) Prepare API key (replace with your own key)
 export DASHSCOPE_API_KEY='sk-xxxxxxxxxxxxxxxx'
 
-# 2) Generate interests for All Beaury dataset
+# 2) Generate interests for Musical Instrunments dataset
 python stage1_generate_interests.py \
   --dataset Musical_Instruments \
   --api_key "$DASHSCOPE_API_KEY" \
